@@ -11,7 +11,7 @@ def dsigmoid(value):
 
 class ff:
 
-    def __init__(num_layers, layer_dim, output_dim, epochs, learning_rate):
+    def __init__(self, num_layers, layer_dim, output_dim, epochs, learning_rate):
         # This fuction is from the data file and produces an array of 8-bit representations of numbers
         X, Y = make_data_set()
         self.X = np.array(X)
@@ -23,7 +23,7 @@ class ff:
         self.W_i2h = 2* np.random.random((8,4)) -1
         self.W_h2o = 2* np.random.random((4,1)) -1
         self.learning_rate = learning_rate
-
+        self.epochs = epochs
 
     def train(self):
         for i in range ( self.epochs ):
@@ -37,7 +37,7 @@ class ff:
             sqo = sigmoid(unsq_o)
 
             #find loss
-            loss = Y - sqo
+            loss = self.Y - sqo
 
             #for documentation purposes
             if ( i % 2000 == 0 ):
@@ -46,11 +46,11 @@ class ff:
             #find deltas
             dW_h2o = loss * dsigmoid(sqo)
 
-            dW_i2h = (dW_h2o.dot(W_h2o.T)) * dsigmoid(sqh)
+            dW_i2h = (dW_h2o.dot(self.W_h2o.T)) * dsigmoid(sqh)
 
             #Update the weights
-            self.W_i2h += inputV.T.dot(dW_i2h) * learning_rate
-            self.W_h2o += sqh.T.dot(dW_h2o) * learning_rate
+            self.W_i2h += inputV.T.dot(dW_i2h) * self.learning_rate
+            self.W_h2o += sqh.T.dot(dW_h2o) * self.learning_rate
         print("\n")
 
     def predict(self, int_G):
@@ -70,14 +70,16 @@ class ff:
             testInput = input("Enter a number ")
             testInput = int(testInput)
             if(testInput >= 0 and testInput < 256 ):
-                if(predict(testInput) >= 0.5):
+                if(self.predict(testInput) >= 0.5):
                     heck = "yes"
                 else:
                     heck = "no"
-                print("The probability that" , testInput , "is divisible by three is" , predict(testInput))
+                print("The probability that" , testInput , "is divisible by three is" , self.predict(testInput))
                 print("In other words:" , heck)
             else:
                 testing = False
 
 
-
+heck = ff(1, 2, 3, 15000, 0.01)
+heck.train()
+heck.test()
