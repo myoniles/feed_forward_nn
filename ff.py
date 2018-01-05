@@ -16,12 +16,15 @@ class ff:
         X, Y = make_data_set()
         self.X = np.array(X)
         self.Y = np.array(Y)
+        self.num_layers = num_layers
 
         ### NOTICE THAT BIAS HAS NOT BEEN IMPLEMENTED
         ### initializes random weights for the net to produce a single probability
         #bias = 1
-        self.W_i2h = 2* np.random.random((8,4)) -1
-        self.W_h2o = 2* np.random.random((4,1)) -1
+        self.W_i2h = 2* np.random.random((layer_dim,layer_dim)) -1
+        if (num_layers > 1 ):
+            self.W_h2h = 2 * np.random.random((num_layers-1,layer_dim,layer_dim)) -1
+        self.W_h2o = 2* np.random.random((layer_dim,output_dim)) -1
         self.learning_rate = learning_rate
         self.epochs = epochs
 
@@ -31,10 +34,24 @@ class ff:
             inputV = self.X
             # forward pass
             unsq_h = np.dot(inputV, self.W_i2h) 
-            sqh = sigmoid(unsq_h)
+            sq_h = sigmoid(unsq_h)
 
-            unsq_o = sqh.dot(self.W_h2o) 
-            sqo = sigmoid(unsq_o)
+            if (self.num_layers > 1):
+                unsq_hidden = []
+                sq_hidden = []
+                for i in range(self.num_layers-1):
+                    if (i == 0):
+                        unsq_hidden.append(sqh.dot(self.W_h2o))
+                        sq_hidden.append(sigmoid(unsq_hidden[i]))
+                    else:
+                        unsq_hidden.append(sq_hidden[i-1].dot(self.W_h2h[i-1]))
+                        sq_hidden.append(sigmoid(unsq_hidden[i]))
+                    
+                unsq_o = sq_hidden[-1].dot(self.W_h2o) 
+                sqo = sigmoid(unsq_o)
+            else:
+                unsq_o = sq_h.dot(self.W_h2o) 
+                sqo = sigmoid(unsq_o)
 
             #find loss
             loss = self.Y - sqo
@@ -46,11 +63,11 @@ class ff:
             #find deltas
             dW_h2o = loss * dsigmoid(sqo)
 
-            dW_i2h = (dW_h2o.dot(self.W_h2o.T)) * dsigmoid(sqh)
+            dW_i2h = (dW_h2o.dot(self.W_h2o.T)) * dsigmoid(sq_h)
 
             #Update the weights
             self.W_i2h += inputV.T.dot(dW_i2h) * self.learning_rate
-            self.W_h2o += sqh.T.dot(dW_h2o) * self.learning_rate
+            self.W_h2o += sq_h.T.dot(dW_h2o) * self.learning_rate
         print("\n")
 
     def predict(self, int_G):
@@ -80,6 +97,6 @@ class ff:
                 testing = False
 
 
-heck = ff(1, 2, 3, 15000, 0.01)
+heck = ff(1, 8, 1, 15000, 0.01)
 heck.train()
 heck.test()
