@@ -29,46 +29,62 @@ class ff:
         self.epochs = epochs
 
     def train(self):
-        for i in range ( self.epochs ):
-            # This is what trains the nueral net and updates the weights
+        for j in range ( self.epochs ):
+            # This its what trains the nueral net and updates the weights
             inputV = self.X
             # forward pass
             unsq_h = np.dot(inputV, self.W_i2h) 
             sq_h = sigmoid(unsq_h)
-            print("sq_h: ",sq_h.shape)
             if (self.num_layers > 1):
                 unsq_hidden = []
                 sq_hidden = []
                 for i in range(self.num_layers-1):
                     if (i == 0):
-                        unsq_hidden.append(sq_h.dot(self.W_h2h))
+                        unsq_hidden.append(sq_h.dot(self.W_h2h[0]))
                         sq_hidden.append(sigmoid(unsq_hidden[i]))
-                        print(sq_hidden[i].shape)
                     else:
-                        unsq_hidden.append(sq_hidden[i-1].dot(self.W_h2h[i-1]))
+                        unsq_hidden.append(sq_hidden[i-1].dot(self.W_h2h[i]))
                         sq_hidden.append(sigmoid(unsq_hidden[i]))
-                        print(sq_hidden[i].shape)
                     
                 unsq_o = sq_hidden[-1].dot(self.W_h2o) 
                 sqo = sigmoid(unsq_o)
             else:
                 unsq_o = sq_h.dot(self.W_h2o) 
                 sqo = sigmoid(unsq_o)
+            
 
             #find loss
             loss = self.Y - sqo
 
             #for documentation purposes
-            if ( i % 2000 == 0 ):
+            if ( j % 2000 == 0 ):
                 print ("Error:", str(np.mean(np.abs(loss))), "\r", end ="")
 
             #find deltas
             dW_h2o = loss * dsigmoid(sqo)
 
-            dW_i2h = (dW_h2o.dot(self.W_h2o.T)) * dsigmoid(sq_h)
+            if(self.num_layers > 1):
+                d_h2h = []
+                d_h2h.append(dW_h2o.dot(self.W_h2o.T) * dsigmoid(sq_h))
+
+                for i in range(1, self.num_layers-1):
+                    d_h2h.insert(0, d_h2h[0].dot(self.W_h2h[0].T) * dsigmoid(sq_hidden[i]))
+
+                dW_i2h = (d_h2h[0].dot(self.W_h2h[0].T)) * dsigmoid(sq_h)
+            else:
+                dW_i2h = (dW_h2o.dot(self.W_h2o.T)) * dsigmoid(sq_h)
 
             #Update the weights
             self.W_i2h += inputV.T.dot(dW_i2h) * self.learning_rate
+
+            if(self.num_layers>1):
+                for i in range(len(d_h2h)):
+                    if(i==0):
+                        self.W_h2h[i] += sq_h.T.dot(d_h2h[i]) * self.learning_rate
+                    else:
+                        self.W_h2h[i] += sq_hidden[i].T.dot(d_h2h[i]) * self.learning_rate
+
+
             self.W_h2o += sq_h.T.dot(dW_h2o) * self.learning_rate
         print("\n")
 
