@@ -36,15 +36,15 @@ class ff:
             unsq_h = np.dot(inputV, self.W_i2h) 
             sq_h = sigmoid(unsq_h)
             if (self.num_layers > 1):
-                unsq_hidden = []
-                sq_hidden = []
+                unsq_hidden = [unsq_h]
+                sq_hidden = [sq_h]
                 for i in range(self.num_layers-1):
                     if (i == 0):
                         unsq_hidden.append(sq_h.dot(self.W_h2h[0]))
-                        sq_hidden.append(sigmoid(unsq_hidden[i]))
+                        sq_hidden.append(sigmoid(unsq_hidden[i+1]))
                     else:
-                        unsq_hidden.append(sq_hidden[i-1].dot(self.W_h2h[i]))
-                        sq_hidden.append(sigmoid(unsq_hidden[i]))
+                        unsq_hidden.append(sq_hidden[i].dot(self.W_h2h[i]))
+                        sq_hidden.append(sigmoid(unsq_hidden[i+1]))
                     
                 unsq_o = sq_hidden[-1].dot(self.W_h2o) 
                 sqo = sigmoid(unsq_o)
@@ -65,10 +65,13 @@ class ff:
 
             if(self.num_layers > 1):
                 d_h2h = []
-                d_h2h.append(dW_h2o.dot(self.W_h2o.T) * dsigmoid(sq_h))
+                d_h2h.append(dW_h2o.dot(self.W_h2o.T) * dsigmoid(sq_hidden[-1]))
 
-                for i in range(1, self.num_layers-1):
-                    d_h2h.insert(0, d_h2h[0].dot(self.W_h2h[0].T) * dsigmoid(sq_hidden[i]))
+                for i in range(1, (self.num_layers-1)):
+                    #print(d_h2h[i-1])
+                    #print(self.W_h2h[i].T)
+                    #print(sq_hidden[i])
+                    d_h2h.insert(0, d_h2h[i-1].dot(self.W_h2h[i].T) * dsigmoid(sq_hidden[i]))
 
                 dW_i2h = (d_h2h[0].dot(self.W_h2h[0].T)) * dsigmoid(sq_h)
             else:
@@ -83,20 +86,36 @@ class ff:
                         self.W_h2h[i] += sq_h.T.dot(d_h2h[i]) * self.learning_rate
                     else:
                         self.W_h2h[i] += sq_hidden[i].T.dot(d_h2h[i]) * self.learning_rate
+                self.W_h2o += sq_hidden[-1].T.dot(dW_h2o) * self.learning_rate
 
-
-            self.W_h2o += sq_h.T.dot(dW_h2o) * self.learning_rate
+            else:
+                self.W_h2o += sq_h.T.dot(dW_h2o) * self.learning_rate
         print("\n")
 
     def predict(self, int_G):
+        x = to_vector(int_G)
+
+        # forward pass
+        unsq_h = np.dot(x, self.W_i2h) 
+        sq_h = sigmoid(unsq_h)
+        if (self.num_layers > 1):
+            unsq_hidden = [unsq_h]
+            sq_hidden = [sq_h]
+            for i in range(self.num_layers-1):
+                if (i == 0):
+                    unsq_hidden.append(sq_h.dot(self.W_h2h[0]))
+                    sq_hidden.append(sigmoid(unsq_hidden[i+1]))
+                else:
+                    unsq_hidden.append(sq_hidden[i].dot(self.W_h2h[i]))
+                    sq_hidden.append(sigmoid(unsq_hidden[i+1]))
+                
+            unsq_o = sq_hidden[-1].dot(self.W_h2o) 
+            sqo = sigmoid(unsq_o)
+        else:
+            unsq_o = sq_h.dot(self.W_h2o) 
+            sqo = sigmoid(unsq_o)
         #This just does a forward pass and returns the squashed value of the output layer
         #its a repeat of the first half of the loop
-        x = to_vector(int_G)
-        unsq_h = np.dot(x, self.W_i2h) 
-        sqh = sigmoid(unsq_h)
-
-        unsq_o = sqh.dot(self.W_h2o)
-        sqo = sigmoid(unsq_o)
         return sqo[0]
 
     def test(self):
@@ -115,6 +134,6 @@ class ff:
                 testing = False
 
 
-#heck = ff(1, 8, 1, 15000, 0.01)
+#heck = ff(3, 8, 1, 15000, 0.1)
 #heck.train()
 #heck.test()
