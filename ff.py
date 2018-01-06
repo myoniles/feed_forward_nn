@@ -35,17 +35,19 @@ class ff:
             # forward pass
             unsq_h = np.dot(inputV, self.W_i2h) 
             sq_h = sigmoid(unsq_h)
-
+            print("sq_h: ",sq_h.shape)
             if (self.num_layers > 1):
                 unsq_hidden = []
                 sq_hidden = []
                 for i in range(self.num_layers-1):
                     if (i == 0):
-                        unsq_hidden.append(sqh.dot(self.W_h2o))
+                        unsq_hidden.append(sq_h.dot(self.W_h2h))
                         sq_hidden.append(sigmoid(unsq_hidden[i]))
+                        print(sq_hidden[i].shape)
                     else:
                         unsq_hidden.append(sq_hidden[i-1].dot(self.W_h2h[i-1]))
                         sq_hidden.append(sigmoid(unsq_hidden[i]))
+                        print(sq_hidden[i].shape)
                     
                 unsq_o = sq_hidden[-1].dot(self.W_h2o) 
                 sqo = sigmoid(unsq_o)
@@ -97,6 +99,6 @@ class ff:
                 testing = False
 
 
-heck = ff(1, 8, 1, 15000, 0.01)
-heck.train()
-heck.test()
+#heck = ff(1, 8, 1, 15000, 0.01)
+#heck.train()
+#heck.test()
