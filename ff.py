@@ -118,22 +118,3 @@ class ff:
         #its a repeat of the first half of the loop
         return sqo[0]
 
-    def test(self):
-        testing = True
-        while(testing):
-            testInput = input("Enter a number ")
-            testInput = int(testInput)
-            if(testInput >= 0 and testInput < 256 ):
-                if(self.predict(testInput) >= 0.5):
-                    heck = "yes"
-                else:
-                    heck = "no"
-                print("The probability that" , testInput , "is divisible by three is" , self.predict(testInput))
-                print("In other words:" , heck)
-            else:
-                testing = False
-
-
-#heck = ff(3, 8, 1, 15000, 0.1)
-#heck.train()
-#heck.test()
